@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knvovk/copypass/internal/domain"
 )
@@ -35,7 +36,7 @@ func (r *repository) Insert(user domain.User) (*domain.User, error) {
 func (r *repository) Find(id string) (*domain.User, error) {
 	query := `
 		SELECT id, username, email, password_hash
-			FROM "user"
+		  FROM "user"
 		 WHERE id = $1;
 	`
 	var user = new(domain.User)
@@ -51,7 +52,7 @@ func (r *repository) Find(id string) (*domain.User, error) {
 func (r *repository) FindByUsername(username string) (*domain.User, error) {
 	query := `
 		SELECT id, username, email, password_hash
-			FROM "user"
+		  FROM "user"
 		 WHERE username = $1;
 	`
 	var user = new(domain.User)
@@ -67,7 +68,7 @@ func (r *repository) FindByUsername(username string) (*domain.User, error) {
 func (r *repository) FindByEmail(email string) (*domain.User, error) {
 	query := `
 		SELECT id, username, email, password_hash
-			FROM "user"
+		  FROM "user"
 		 WHERE email = $1;
 	`
 	var user = new(domain.User)
@@ -83,7 +84,7 @@ func (r *repository) FindByEmail(email string) (*domain.User, error) {
 func (r *repository) FindAll(limit, offset int) ([]*domain.User, error) {
 	query := `
 		SELECT id, username, email
-			FROM "user"
+		  FROM "user"
 		 LIMIT $1
 		OFFSET $2;
 	`
@@ -107,7 +108,7 @@ func (r *repository) FindAll(limit, offset int) ([]*domain.User, error) {
 func (r *repository) Update(user domain.User) error {
 	query := `
 		UPDATE "user" 
-			 SET username = $1, email = $2, password_hash = $3 
+		   SET username = $1, email = $2, password_hash = $3 
 		 WHERE id = $4;
 	`
 	args := []any{user.Username, user.Email, user.PasswordHash}
