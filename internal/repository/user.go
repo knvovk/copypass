@@ -17,7 +17,7 @@ type repository struct {
 	pool *pgxpool.Pool
 }
 
-func (r *repository) Insert(user domain.User) (*domain.User, error) {
+func (r *repository) Insert(user domain.User) (domain.User, error) {
 	query := `
 		   INSERT INTO "user" (username, email, password_hash)
 		   VALUES ($1, $2, $3)
@@ -27,61 +27,61 @@ func (r *repository) Insert(user domain.User) (*domain.User, error) {
 	args := []any{user.Username, user.Email, user.PasswordHash}
 	row := r.pool.QueryRow(context.Background(), query, args...)
 	if err := row.Scan(&id); err != nil {
-		return nil, err
+		return domain.User{}, err
 	}
 	user.Id = id
-	return &user, nil
+	return user, nil
 }
 
-func (r *repository) Find(id string) (*domain.User, error) {
+func (r *repository) Find(id string) (domain.User, error) {
 	query := `
 		SELECT id, username, email, password_hash
 		  FROM "user"
 		 WHERE id = $1;
 	`
-	var user = new(domain.User)
+	var user = domain.User{}
 	row := r.pool.QueryRow(context.Background(), query, id)
 	args := []any{&user.Id, &user.Username, &user.Email, &user.PasswordHash}
 	err := row.Scan(args...)
 	if err != nil {
-		return nil, err
+		return domain.User{}, err
 	}
 	return user, nil
 }
 
-func (r *repository) FindByUsername(username string) (*domain.User, error) {
+func (r *repository) FindByUsername(username string) (domain.User, error) {
 	query := `
 		SELECT id, username, email, password_hash
 		  FROM "user"
 		 WHERE username = $1;
 	`
-	var user = new(domain.User)
+	var user = domain.User{}
 	row := r.pool.QueryRow(context.Background(), query, username)
 	args := []any{&user.Id, &user.Username, &user.Email, &user.PasswordHash}
 	err := row.Scan(args...)
 	if err != nil {
-		return nil, err
+		return domain.User{}, err
 	}
 	return user, nil
 }
 
-func (r *repository) FindByEmail(email string) (*domain.User, error) {
+func (r *repository) FindByEmail(email string) (domain.User, error) {
 	query := `
 		SELECT id, username, email, password_hash
 		  FROM "user"
 		 WHERE email = $1;
 	`
-	var user = new(domain.User)
+	var user = domain.User{}
 	row := r.pool.QueryRow(context.Background(), query, email)
 	args := []any{&user.Id, &user.Username, &user.Email, &user.PasswordHash}
 	err := row.Scan(args...)
 	if err != nil {
-		return nil, err
+		return domain.User{}, err
 	}
 	return user, nil
 }
 
-func (r *repository) FindAll(limit, offset int) ([]*domain.User, error) {
+func (r *repository) FindAll(limit, offset int) ([]domain.User, error) {
 	query := `
 		SELECT id, username, email
 		  FROM "user"
@@ -93,9 +93,9 @@ func (r *repository) FindAll(limit, offset int) ([]*domain.User, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	users := make([]*domain.User, 0)
+	users := make([]domain.User, 0)
 	for rows.Next() {
-		var user = new(domain.User)
+		var user = domain.User{}
 		args := []any{&user.Id, &user.Username, &user.Email}
 		if err = rows.Scan(args...); err != nil {
 			return nil, err
@@ -105,7 +105,7 @@ func (r *repository) FindAll(limit, offset int) ([]*domain.User, error) {
 	return users, nil
 }
 
-func (r *repository) Update(user domain.User) error {
+func (r *repository) Update(user domain.User) (domain.User, error) {
 	query := `
 		UPDATE "user" 
 		   SET username = $1, email = $2, password_hash = $3 
@@ -113,9 +113,9 @@ func (r *repository) Update(user domain.User) error {
 	`
 	args := []any{user.Username, user.Email, user.PasswordHash, user.Id}
 	if _, err := r.pool.Exec(context.Background(), query, args...); err != nil {
-		return err
+		return domain.User{}, nil
 	}
-	return nil
+	return user, nil
 }
 
 func (r *repository) Delete(id string) error {
