@@ -111,9 +111,8 @@ func (r *repository) Update(user domain.User) error {
 		   SET username = $1, email = $2, password_hash = $3 
 		 WHERE id = $4;
 	`
-	args := []any{user.Username, user.Email, user.PasswordHash}
-	_, err := r.pool.Exec(context.Background(), query, args...)
-	if err != nil {
+	args := []any{user.Username, user.Email, user.PasswordHash, user.Id}
+	if _, err := r.pool.Exec(context.Background(), query, args...); err != nil {
 		return err
 	}
 	return nil
