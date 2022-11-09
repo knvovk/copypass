@@ -113,8 +113,9 @@ func (r *repository) Update(user domain.User) (domain.User, error) {
 	`
 	args := []any{user.Username, user.Email, user.PasswordHash, user.Id}
 	if _, err := r.pool.Exec(context.Background(), query, args...); err != nil {
-		return domain.User{}, nil
+		return domain.User{}, err
 	}
+	// TODO: Return Updated Instance
 	return user, nil
 }
 

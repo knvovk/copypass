@@ -20,8 +20,8 @@ func (h *UserHandler) Register(e *echo.Echo) {
 	e.GET("/users", h.GetMany)
 	e.POST("/users", h.Create)
 	e.GET("/users/:id", h.GetOne)
-	e.PATCH("/users/:id", h.GetOne)
-	e.DELETE("/users/:id", h.GetOne)
+	e.PATCH("/users/:id", h.Update)
+	e.DELETE("/users/:id", h.Delete)
 }
 
 func (h *UserHandler) Create(c echo.Context) error {
@@ -101,6 +101,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 			Data:    nil,
 		})
 	}
+	user.Id = c.Param("id")
 	_user, err := h.userService.Update(*user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, data.Response{
