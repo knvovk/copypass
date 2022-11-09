@@ -11,11 +11,8 @@ type UserService struct {
 	log  *logrus.Logger
 }
 
-func NewUserService(r domain.UserRepository, log *logrus.Logger) *UserService {
-	return &UserService{
-		repo: r,
-		log:  log,
-	}
+func NewUserService(repo domain.UserRepository, log *logrus.Logger) *UserService {
+	return &UserService{repo: repo, log: log}
 }
 
 func (s *UserService) Create(user data.User) (data.User, error) {
@@ -36,7 +33,7 @@ func (s *UserService) Create(user data.User) (data.User, error) {
 	return user, nil
 }
 
-func (s *UserService) Get(id string, unsafe bool) (data.User, error) {
+func (s *UserService) GetOne(id string, unsafe bool) (data.User, error) {
 	_user, err := s.repo.Find(id)
 	if err != nil {
 		s.log.Errorf("Operation GET USER failed: %v", err)
@@ -55,7 +52,7 @@ func (s *UserService) Get(id string, unsafe bool) (data.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAll(limit, offset int) ([]data.User, error) {
+func (s *UserService) GetMany(limit, offset int) ([]data.User, error) {
 	_users, err := s.repo.FindAll(limit, offset)
 	if err != nil {
 		s.log.Errorf("Operation GET USERS failed: %v", err)
