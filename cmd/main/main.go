@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var configPath = flag.String("config", "config.toml", "Path to config.toml")
+var configPath = flag.String("config", "config/config.toml", "Path to config.toml")
 
 func main() {
 	flag.Parse()
@@ -25,8 +25,8 @@ func main() {
 
 	logger := logrus.New()
 	logger.Formatter = buildLogFormatter(cfg)
-	logger.SetReportCaller(true)
-	if cfg.App.IsDebug {
+	// logger.SetReportCaller(true)
+if cfg.App.IsDebug {
 		logger.Level = logrus.DebugLevel
 	} else {
 		logger.Level = logrus.InfoLevel
