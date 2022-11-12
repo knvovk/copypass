@@ -17,19 +17,15 @@ func NewUserService(repo domain.UserRepository, log *logrus.Logger) *UserService
 
 func (s *UserService) Create(user data.User) (data.User, error) {
 	passwordHash := user.Password
-	_user := domain.User{
-		Username:     user.Username,
-		Email:        user.Email,
-		PasswordHash: passwordHash,
-	}
+	_user := mapUserDomain(user)
+	_user.PasswordHash = passwordHash
 	inserted, err := s.repo.Insert(_user)
 	if err != nil {
 		s.log.Errorf("Operation CREATE USER failed: %v", err)
 		return data.User{}, err
 	}
-	s.log.Infof("Operation CREATE USER done: %s", inserted.Id)
-	user.Id = inserted.Id
-	user.Password = ""
+	user = mapUserData(inserted, false)
+	s.log.Infof("Operation CREATE USER done: %s", user.Id)
 	return user, nil
 }
 
@@ -40,14 +36,7 @@ func (s *UserService) GetOne(id string, unsafe bool) (data.User, error) {
 		s.log.Errorf("Requested id: %s", id)
 		return data.User{}, err
 	}
-	user := data.User{
-		Id:       _user.Id,
-		Username: _user.Username,
-		Email:    _user.Email,
-	}
-	if unsafe {
-		user.Password = _user.PasswordHash
-	}
+	user := mapUserData(_user, true)
 	s.log.Debugf("Operation GET USER done: %v", user)
 	return user, nil
 }
@@ -60,11 +49,7 @@ func (s *UserService) GetMany(limit, offset int) ([]data.User, error) {
 	}
 	users := make([]data.User, 0)
 	for _, _user := range _users {
-		user := data.User{
-			Id:       _user.Id,
-			Username: _user.Username,
-			Email:    _user.Email,
-		}
+		user := mapUserData(_user, false)
 		users = append(users, user)
 	}
 	s.log.Debugf("Operation GET USERS done. Total: %d", len(users))
@@ -72,19 +57,13 @@ func (s *UserService) GetMany(limit, offset int) ([]data.User, error) {
 }
 
 func (s *UserService) Update(user data.User) (data.User, error) {
-	_user := domain.User{
-		Id:       user.Id,
-		Username: user.Username,
-		Email:    user.Email,
-	}
+	_user := mapUserDomain(user)
 	updated, err := s.repo.Update(_user)
 	if err != nil {
 		s.log.Errorf("Operation UPDATE USER failed: %v", err)
 		return data.User{}, err
 	}
-	user.Username = updated.Username
-	user.Email = updated.Email
-	user.Password = ""
+	user = mapUserData(updated, false)
 	s.log.Infof("Operation UPDATE USER done: %v", user)
 	return user, nil
 }
@@ -96,4 +75,25 @@ func (s *UserService) Delete(user data.User) error {
 	}
 	s.log.Infof("Operation DELETE USER done: %v", user)
 	return nil
+}
+
+func mapUserData(user domain.User, unsafe bool) data.User {
+	_user := data.User{
+		Id:       user.Id,
+		Username: user.Username,
+		Email:    user.Email,
+	}
+	if unsafe {
+		_user.Password = user.PasswordHash
+	}
+	return _user
+}
+
+func mapUserDomain(user data.User) domain.User {
+	return domain.User{
+		Id:           user.Id,
+		Username:     user.Username,
+		Email:        user.Email,
+		PasswordHash: user.Password,
+	}
 }

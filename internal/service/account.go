@@ -16,13 +16,13 @@ func NewAccountService(repo domain.AccountRepository, log *logrus.Logger) *Accou
 }
 
 func (s *AccountService) Create(account data.Account) (data.Account, error) {
-	_account := mapToDomain(account)
+	_account := mapAccountDomain(account)
 	inserted, err := s.repo.Insert(_account)
 	if err != nil {
 		s.log.Errorf("Operation CREATE ACCOUNT failed: %v", err)
 		return data.Account{}, nil
 	}
-	account = mapToData(inserted)
+	account = mapAccountData(inserted)
 	s.log.Infof("Operation CREATE ACCOUNT done: %s", account.Id)
 	return account, nil
 }
@@ -34,7 +34,7 @@ func (s *AccountService) GetOne(id string) (data.Account, error) {
 		s.log.Errorf("Requested id: %s", id)
 		return data.Account{}, nil
 	}
-	account := mapToData(_account)
+	account := mapAccountData(_account)
 	s.log.Debugf("Operation GET ACCOUNT done: %v", account)
 	return account, nil
 }
@@ -47,7 +47,7 @@ func (s *AccountService) GetMany(limit, offset int) ([]data.Account, error) {
 	}
 	accounts := make([]data.Account, 0)
 	for _, _account := range _accounts {
-		account := mapToData(_account)
+		account := mapAccountData(_account)
 		accounts = append(accounts, account)
 	}
 	s.log.Debugf("Operation GET ACCOUNTS done. Total: %d", len(accounts))
@@ -55,13 +55,13 @@ func (s *AccountService) GetMany(limit, offset int) ([]data.Account, error) {
 }
 
 func (s *AccountService) Update(account data.Account) (data.Account, error) {
-	_account := mapToDomain(account)
+	_account := mapAccountDomain(account)
 	updated, err := s.repo.Update(_account)
 	if err != nil {
 		s.log.Errorf("Operation UPDATE ACCOUNT failed: %v", err)
 		return data.Account{}, nil
 	}
-	account = mapToData(updated)
+	account = mapAccountData(updated)
 	s.log.Infof("Operation UPDATE ACCOUNT done: %v", account)
 	return account, nil
 }
@@ -75,7 +75,7 @@ func (s *AccountService) Delete(account data.Account) error {
 	return nil
 }
 
-func mapToData(account domain.Account) data.Account {
+func mapAccountData(account domain.Account) data.Account {
 	return data.Account{
 		Id:          account.Id,
 		UserId:      account.User.Id,
@@ -87,7 +87,7 @@ func mapToData(account domain.Account) data.Account {
 	}
 }
 
-func mapToDomain(account data.Account) domain.Account {
+func mapAccountDomain(account data.Account) domain.Account {
 	return domain.Account{
 		Id:          account.Id,
 		User:        domain.User{Id: account.UserId},
