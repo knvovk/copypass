@@ -7,11 +7,11 @@ import (
 )
 
 type AccountService struct {
-	repo domain.AccountRepository
+	repo *domain.AccountRepository
 	log  *logrus.Logger
 }
 
-func NewAccountService(repo domain.AccountRepository, log *logrus.Logger) *AccountService {
+func NewAccountService(repo *domain.AccountRepository, log *logrus.Logger) *AccountService {
 	return &AccountService{repo: repo, log: log}
 }
 

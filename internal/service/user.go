@@ -7,11 +7,11 @@ import (
 )
 
 type UserService struct {
-	repo domain.UserRepository
+	repo *domain.UserRepository
 	log  *logrus.Logger
 }
 
-func NewUserService(repo domain.UserRepository, log *logrus.Logger) *UserService {
+func NewUserService(repo *domain.UserRepository, log *logrus.Logger) *UserService {
 	return &UserService{repo: repo, log: log}
 }
 
