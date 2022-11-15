@@ -1,9 +1,7 @@
 package domain
 
 import (
-	"context"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	"database/sql"
 )
 
 type User struct {
@@ -14,98 +12,104 @@ type User struct {
 }
 
 type UserRepository struct {
-	pool *pgxpool.Pool
+	db *sql.DB
 }
 
-func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
-	return &UserRepository{pool: pool}
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 func (r *UserRepository) Insert(user User) (User, error) {
-	query := `
-		   INSERT INTO "user" (username, email, password_hash)
-		   VALUES ($1, $2, $3)
+	stmt, err := r.db.Prepare(`
+		INSERT INTO "user" (username, email, password_hash)
+		VALUES ($1, $2, $3)
 		RETURNING id;
-	`
-	var id string
-	args := []any{user.Username, user.Email, user.PasswordHash}
-	row := r.pool.QueryRow(context.Background(), query, args...)
-	if err := row.Scan(&id); err != nil {
-		return User{}, err
+	`)
+	if err != nil {
+		return user, err
 	}
-	user.Id = id
+	args := []any{user.Username, user.Email, user.PasswordHash}
+	if err := stmt.QueryRow(args...).Scan(&user.Id); err != nil {
+		return user, err
+	}
 	return user, nil
 }
 
 func (r *UserRepository) Find(id string) (User, error) {
-	query := `
+	stmt, err := r.db.Prepare(`
 		SELECT id, username, email, password_hash
-		  FROM "user"
-		 WHERE id = $1;
-	`
+		FROM "user"
+		WHERE id = $1;
+	`)
 	var user = User{}
-	row := r.pool.QueryRow(context.Background(), query, id)
+	if err != nil {
+		return user, err
+	}
 	args := []any{
 		&user.Id, &user.Username, &user.Email, &user.PasswordHash,
 	}
-	if err := row.Scan(args...); err != nil {
-		return User{}, err
+	if err := stmt.QueryRow(id).Scan(args...); err != nil {
+		return user, err
 	}
 	return user, nil
 }
 
 func (r *UserRepository) FindByUsername(username string) (User, error) {
-	query := `
-		SELECT id, username, email, password_hash
-		  FROM "user"
-		 WHERE username = $1;
-	`
+	stmt, err := r.db.Prepare(`
+		SELECT id, username, email
+		FROM "user"
+		WHERE username = $1;
+	`)
 	var user = User{}
-	row := r.pool.QueryRow(context.Background(), query, username)
-	args := []any{
-		&user.Id, &user.Username, &user.Email, &user.PasswordHash,
+	if err != nil {
+		return user, err
 	}
-	if err := row.Scan(args...); err != nil {
-		return User{}, err
+	args := []any{&user.Id, &user.Username, &user.Email}
+	if err := stmt.QueryRow(username).Scan(args...); err != nil {
+		return user, err
 	}
 	return user, nil
 }
 
 func (r *UserRepository) FindByEmail(email string) (User, error) {
-	query := `
-		SELECT id, username, email, password_hash
-		  FROM "user"
-		 WHERE email = $1;
-	`
+	stmt, err := r.db.Prepare(`
+		SELECT id, username, email
+		FROM "user"
+		WHERE email = $1;
+	`)
 	var user = User{}
-	row := r.pool.QueryRow(context.Background(), query, email)
-	args := []any{
-		&user.Id, &user.Username, &user.Email, &user.PasswordHash,
+	if err != nil {
+		return user, err
 	}
-	if err := row.Scan(args...); err != nil {
-		return User{}, err
+	args := []any{&user.Id, &user.Username, &user.Email}
+	if err := stmt.QueryRow(email).Scan(args...); err != nil {
+		return user, err
 	}
 	return user, nil
 }
 
-func (r *UserRepository) FindAll(limit, offset int) ([]User, error) {
-	query := `
+func (r *UserRepository) FindAll(limit, offset uint) ([]User, error) {
+	stmt, err := r.db.Prepare(`
 		SELECT id, username, email
-		  FROM "user"
-		 LIMIT $1
+		FROM "user"
+		LIMIT $1
 		OFFSET $2;
-	`
-	rows, err := r.pool.Query(context.Background(), query, limit, offset)
+	`)
+	users := make([]User, 0)
 	if err != nil {
-		return nil, err
+		return users, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(limit, offset)
+	if err != nil {
+		return users, err
 	}
 	defer rows.Close()
-	users := make([]User, 0)
 	for rows.Next() {
 		var user = User{}
 		args := []any{&user.Id, &user.Username, &user.Email}
-		if err = rows.Scan(args...); err != nil {
-			return nil, err
+		if err := rows.Scan(args...); err != nil {
+			return users, err
 		}
 		users = append(users, user)
 	}
@@ -113,22 +117,53 @@ func (r *UserRepository) FindAll(limit, offset int) ([]User, error) {
 }
 
 func (r *UserRepository) Update(user User) (User, error) {
-	query := `
-		UPDATE "user" 
-		   SET username = $1, email = $2, password_hash = $3 
-		 WHERE id = $4;
-	`
-	args := []any{user.Username, user.Email, user.PasswordHash, user.Id}
-	if _, err := r.pool.Exec(context.Background(), query, args...); err != nil {
-		return User{}, err
+	tx, err := r.db.Begin()
+	if err != nil {
+		return user, err
 	}
-	// TODO: Return Updated Instance
+	defer tx.Rollback()
+	stmt, err := tx.Prepare(`
+		UPDATE "user"
+		SET username = $1, email = $2, password_hash = $3
+		WHERE id = $4;
+	`)
+	if err != nil {
+		return user, err
+	}
+	defer stmt.Close()
+	args := []any{
+		user.Username, user.Email,
+		user.PasswordHash, user.Id,
+	}
+	if _, err := stmt.Exec(args...); err != nil {
+		return user, err
+	}
+	stmt, err = tx.Prepare(`
+		SELECT id, username, email, password_hash
+		FROM "user"
+		WHERE id = $1;
+	`)
+	if err != nil {
+		return user, err
+	}
+	args = []any{
+		&user.Id, &user.Username, &user.Email, &user.PasswordHash,
+	}
+	if err := stmt.QueryRow(user.Id).Scan(args...); err != nil {
+		return user, err
+	}
+	if err := tx.Commit(); err != nil {
+		return user, err
+	}
 	return user, nil
 }
 
 func (r *UserRepository) Delete(id string) error {
-	query := `DELETE FROM "user" WHERE id = $1`
-	if _, err := r.pool.Exec(context.Background(), query, id); err != nil {
+	stmt, err := r.db.Prepare(`DELETE FROM "user" WHERE id = $1`)
+	if err != nil {
+		return err
+	}
+	if _, err := stmt.Exec(id); err != nil {
 		return err
 	}
 	return nil
