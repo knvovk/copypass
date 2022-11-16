@@ -45,8 +45,8 @@ func (h *AccountHandler) GetOne(c echo.Context) error {
 }
 
 func (h *AccountHandler) GetMany(c echo.Context) error {
-	limit, offset := 10, 0
-	query := echo.QueryParamsBinder(c).Int("limit", &limit).Int("offset", &offset)
+	var limit, offset uint = 10, 0
+	query := echo.QueryParamsBinder(c).Uint("limit", &limit).Uint("offset", &offset)
 	if err := query.BindError(); err != nil {
 		return BadRequestError(c, err)
 	}

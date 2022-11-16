@@ -1,12 +1,12 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/knvovk/copypass/internal/app"
 	"github.com/knvovk/copypass/internal/config"
 	"github.com/sirupsen/logrus"
@@ -26,7 +26,7 @@ func main() {
 	logger := logrus.New()
 	logger.Formatter = buildLogFormatter(cfg)
 	// logger.SetReportCaller(true)
-if cfg.App.IsDebug {
+	if cfg.App.IsDebug {
 		logger.Level = logrus.DebugLevel
 	} else {
 		logger.Level = logrus.InfoLevel
@@ -40,13 +40,14 @@ if cfg.App.IsDebug {
 		logger.Out = file
 	}
 
-	pool, err := pgxpool.New(context.Background(), cfg.DB.URL)
+	db, err := sql.Open("pgx", cfg.DB.URL)
 	if err != nil {
 		fmt.Printf("Unable to create connection pool: %v\n", err)
 		os.Exit(1)
 	}
+	defer db.Close()
 
-	if err = app.Run(cfg, pool, logger); err != nil {
+	if err = app.Run(cfg, db, logger); err != nil {
 		fmt.Printf("Unable to run application: %v\n", err)
 		os.Exit(1)
 	}

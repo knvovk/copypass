@@ -1,9 +1,9 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knvovk/copypass/internal/config"
 	"github.com/knvovk/copypass/internal/domain"
 	"github.com/knvovk/copypass/internal/handler"
@@ -12,16 +12,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Run(cfg *config.Config, pool *pgxpool.Pool, log *logrus.Logger) error {
+func Run(cfg *config.Config, db *sql.DB, log *logrus.Logger) error {
 	e := echo.New()
 	{
-		r := domain.NewUserRepository(pool)
+		r := domain.NewUserRepository(db)
 		s := service.NewUserService(r, log)
 		h := handler.NewUserHandler(s)
 		h.Register(e)
 	}
 	{
-		r := domain.NewAccountRepository(pool)
+		r := domain.NewAccountRepository(db)
 		s := service.NewAccountService(r, log)
 		h := handler.NewAccountHandler(s)
 		h.Register(e)

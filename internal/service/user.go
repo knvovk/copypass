@@ -41,7 +41,7 @@ func (s *UserService) GetOne(id string, unsafe bool) (data.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetMany(limit, offset int) ([]data.User, error) {
+func (s *UserService) GetMany(limit, offset uint) ([]data.User, error) {
 	_users, err := s.repo.FindAll(limit, offset)
 	if err != nil {
 		s.log.Errorf("Operation GET USERS failed: %v", err)
