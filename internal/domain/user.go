@@ -88,7 +88,7 @@ func (r *UserRepository) FindByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) FindAll(limit, offset uint) ([]User, error) {
+func (r *UserRepository) FindAll(limit, offset int) ([]User, error) {
 	stmt, err := r.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
