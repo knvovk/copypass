@@ -7,6 +7,8 @@ require (
 	github.com/jackc/pgx/v5 v5.0.0-alpha.5
 )
 
+require github.com/gorilla/mux v1.8.0 // indirect
+
 require (
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/labstack/gommon v0.4.0 // indirect

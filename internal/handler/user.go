@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/knvovk/copypass/internal/data"
 	"github.com/knvovk/copypass/internal/service"
-	"github.com/labstack/echo/v4"
 )
 
 type UserHandler struct {
@@ -16,68 +18,118 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
-func (h *UserHandler) Register(e *echo.Echo) {
-	e.GET("/users", h.GetMany)
-	e.POST("/users", h.Create)
-	e.GET("/users/:id", h.GetOne)
-	e.PATCH("/users/:id", h.Update)
-	e.DELETE("/users/:id", h.Delete)
+func (h *UserHandler) Register(router *mux.Router) {
+	router.HandleFunc("/users", h.GetMany).Methods(http.MethodGet)
+	router.HandleFunc("/users", h.Create).Methods(http.MethodPost)
+	router.HandleFunc("/users/{id}", h.GetOne).Methods(http.MethodGet)
+	router.HandleFunc("/users/{id}", h.Update).Methods(http.MethodPatch)
+	router.HandleFunc("/users/{id}", h.Delete).Methods(http.MethodDelete)
 }
 
-func (h *UserHandler) Create(c echo.Context) error {
-	user := new(data.User)
-	if err := c.Bind(user); err != nil {
-		return BadRequestError(c, err)
+func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var user data.User
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	_user, err := h.userService.Create(*user)
+	defer r.Body.Close()
+
+	_user, err := h.userService.Create(user)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return SuccessResponse(c, _user)
+
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(SuccessResponse(_user))
+	w.Write(response)
 }
 
-func (h *UserHandler) GetOne(c echo.Context) error {
-	user, err := h.userService.GetOne(c.Param("id"), true)
+func (h *UserHandler) GetOne(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id := params["id"]
+	w.Header().Set("Content-Type", "application/json")
+
+	user, err := h.userService.GetOne(id, true)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return SuccessResponse(c, user)
+
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(SuccessResponse(user))
+	w.Write(response)
 }
 
-func (h *UserHandler) GetMany(c echo.Context) error {
-	var limit, offset uint = 10, 0
-	query := echo.QueryParamsBinder(c).Uint("limit", &limit).Uint("offset", &offset)
-	if err := query.BindError(); err != nil {
-		return BadRequestError(c, err)
+func (h *UserHandler) GetMany(w http.ResponseWriter, r *http.Request) {
+	var limit, offset int = 10, 0
+	if r.URL.Query().Has("limit") {
+		limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
 	}
+	if r.URL.Query().Has("offset") {
+		offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	}
+	w.Header().Set("Content-Type", "application/json")
+
 	users, err := h.userService.GetMany(limit, offset)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	resource := echo.Map{
-		"count": len(users),
-		"users": users,
-	}
-	return SuccessResponse(c, resource)
+
+	w.WriteHeader(http.StatusOK)
+	m := map[string]any{"count": len(users), "users": users}
+	response, _ := json.Marshal(SuccessResponse(m))
+	w.Write(response)
 }
 
-func (h *UserHandler) Update(c echo.Context) error {
-	user := new(data.User)
-	if err := c.Bind(user); err != nil {
-		return BadRequestError(c, err)
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	user := data.User{Id: params["id"]}
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	user.Id = c.Param("id")
-	_user, err := h.userService.Update(*user)
+	defer r.Body.Close()
+
+	_user, err := h.userService.Update(user)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return SuccessResponse(c, _user)
+
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(SuccessResponse(_user))
+	w.Write(response)
 }
 
-func (h *UserHandler) Delete(c echo.Context) error {
-	user := data.User{Id: c.Param("id")}
+func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	user := data.User{Id: params["id"]}
+	w.Header().Set("Content-Type", "application/json")
+
 	if err := h.userService.Delete(user); err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(FailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return c.NoContent(http.StatusNoContent)
+
+	w.WriteHeader(http.StatusNoContent)
 }
