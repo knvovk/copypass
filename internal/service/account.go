@@ -39,7 +39,7 @@ func (s *AccountService) GetOne(id string) (data.Account, error) {
 	return account, nil
 }
 
-func (s *AccountService) GetMany(limit, offset uint) ([]data.Account, error) {
+func (s *AccountService) GetMany(limit, offset int) ([]data.Account, error) {
 	_accounts, err := s.repo.FindAll(limit, offset)
 	if err != nil {
 		s.log.Errorf("Operation GET ACCOUNTS failed: %v", err)

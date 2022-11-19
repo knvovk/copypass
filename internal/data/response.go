@@ -12,3 +12,19 @@ type Response struct {
 	Message string
 	Data    any
 }
+
+func BuildFailureResponse(err error) Response {
+	return Response{
+		Status:  StatusFailure,
+		Message: err.Error(),
+		Data:    nil,
+	}
+}
+
+func BuildSuccessResponse(data any) Response {
+	return Response{
+		Status:  StatusSuccess,
+		Message: "",
+		Data:    data,
+	}
+}

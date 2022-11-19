@@ -110,7 +110,7 @@ func (r *AccountRepository) FindByName(name string) (Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) FindAll(limit, offset uint) ([]Account, error) {
+func (r *AccountRepository) FindAll(limit, offset int) ([]Account, error) {
 	stmt, err := r.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
