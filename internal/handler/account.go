@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/knvovk/copypass/internal/data"
 	"github.com/knvovk/copypass/internal/service"
-	"github.com/labstack/echo/v4"
 )
 
 type AccountHandler struct {
@@ -16,68 +18,117 @@ func NewAccountHandler(accountService *service.AccountService) *AccountHandler {
 	return &AccountHandler{accountService: accountService}
 }
 
-func (h *AccountHandler) Register(e *echo.Echo) {
-	e.GET("/accounts", h.GetMany)
-	e.POST("/accounts", h.Create)
-	e.GET("/accounts/:id", h.GetOne)
-	e.PATCH("/accounts/:id", h.Update)
-	e.DELETE("/accounts/:id", h.Delete)
+func (h *AccountHandler) Register(router *mux.Router) {
+	router.HandleFunc("/accounts", h.GetMany).Methods(http.MethodGet)
+	router.HandleFunc("/accounts", h.Create).Methods(http.MethodPost)
+	router.HandleFunc("/accounts/{id}", h.GetOne).Methods(http.MethodGet)
+	router.HandleFunc("/accounts/{id}", h.Update).Methods(http.MethodPatch)
+	router.HandleFunc("/accounts/{id}", h.Delete).Methods(http.MethodDelete)
 }
 
-func (h *AccountHandler) Create(c echo.Context) error {
-	account := new(data.Account)
-	if err := c.Bind(account); err != nil {
-		return BadRequestError(c, err)
+func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var account data.Account
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	_account, err := h.accountService.Create(*account)
+	defer r.Body.Close()
+
+	_account, err := h.accountService.Create(account)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return SuccessResponse(c, _account)
+
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(data.BuildSuccessResponse(_account))
+	w.Write(response)
 }
 
-func (h *AccountHandler) GetOne(c echo.Context) error {
-	account, err := h.accountService.GetOne(c.Param("id"))
+func (h *AccountHandler) GetOne(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	w.Header().Set("Content-Type", "application/json")
+
+	account, err := h.accountService.GetOne(params["id"])
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return SuccessResponse(c, account)
+
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(data.BuildSuccessResponse(account))
+	w.Write(response)
 }
 
-func (h *AccountHandler) GetMany(c echo.Context) error {
-	var limit, offset uint = 10, 0
-	query := echo.QueryParamsBinder(c).Uint("limit", &limit).Uint("offset", &offset)
-	if err := query.BindError(); err != nil {
-		return BadRequestError(c, err)
+func (h *AccountHandler) GetMany(w http.ResponseWriter, r *http.Request) {
+	var limit, offset int = 10, 0
+	if r.URL.Query().Has("limit") {
+		limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
 	}
+	if r.URL.Query().Has("offset") {
+		offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	}
+	w.Header().Set("Content-Type", "application/json")
+
 	accounts, err := h.accountService.GetMany(limit, offset)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	resource := echo.Map{
-		"count":    len(accounts),
-		"accounts": accounts,
-	}
-	return SuccessResponse(c, resource)
+
+	w.WriteHeader(http.StatusOK)
+	m := map[string]any{"count": len(accounts), "accounts": accounts}
+	response, _ := json.Marshal(data.BuildSuccessResponse(m))
+	w.Write(response)
 }
 
-func (h *AccountHandler) Update(c echo.Context) error {
-	account := new(data.Account)
-	if err := c.Bind(account); err != nil {
-		return BadRequestError(c, err)
+func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	account := data.Account{Id: params["id"]}
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	account.Id = c.Param("id")
-	_account, err := h.accountService.Update(*account)
+	defer r.Body.Close()
+
+	_account, err := h.accountService.Update(account)
 	if err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return SuccessResponse(c, _account)
+
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(data.BuildSuccessResponse(_account))
+	w.Write(response)
 }
 
-func (h *AccountHandler) Delete(c echo.Context) error {
-	account := data.Account{Id: c.Param("id")}
+func (h *AccountHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	account := data.Account{Id: params["id"]}
+	w.Header().Set("Content-Type", "application/json")
+
 	if err := h.accountService.Delete(account); err != nil {
-		return InternalServerError(c, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		w.Write(response)
+		return
 	}
-	return c.NoContent(http.StatusNoContent)
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -32,7 +32,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
@@ -41,31 +41,30 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_user, err := h.userService.Create(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(SuccessResponse(_user))
+	response, _ := json.Marshal(data.BuildSuccessResponse(_user))
 	w.Write(response)
 }
 
 func (h *UserHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	id := params["id"]
 	w.Header().Set("Content-Type", "application/json")
 
-	user, err := h.userService.GetOne(id, true)
+	user, err := h.userService.GetOne(params["id"], true)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(SuccessResponse(user))
+	response, _ := json.Marshal(data.BuildSuccessResponse(user))
 	w.Write(response)
 }
 
@@ -82,14 +81,14 @@ func (h *UserHandler) GetMany(w http.ResponseWriter, r *http.Request) {
 	users, err := h.userService.GetMany(limit, offset)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	m := map[string]any{"count": len(users), "users": users}
-	response, _ := json.Marshal(SuccessResponse(m))
+	response, _ := json.Marshal(data.BuildSuccessResponse(m))
 	w.Write(response)
 }
 
@@ -100,7 +99,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
@@ -109,13 +108,13 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	_user, err := h.userService.Update(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(SuccessResponse(_user))
+	response, _ := json.Marshal(data.BuildSuccessResponse(_user))
 	w.Write(response)
 }
 
@@ -126,7 +125,7 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.userService.Delete(user); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(FailureResponse(err))
+		response, _ := json.Marshal(data.BuildFailureResponse(err))
 		w.Write(response)
 		return
 	}
