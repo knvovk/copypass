@@ -1,4 +1,4 @@
-package domain
+package storage
 
 import (
 	"database/sql"
@@ -14,16 +14,16 @@ type Account struct {
 	Password    string
 }
 
-func NewAccountRepository(db *sql.DB) *AccountRepository {
-	return &AccountRepository{db: db}
+func NewAccountStorage(db *sql.DB) *AccountStorage {
+	return &AccountStorage{db: db}
 }
 
-type AccountRepository struct {
+type AccountStorage struct {
 	db *sql.DB
 }
 
-func (r *AccountRepository) Insert(account Account) (Account, error) {
-	stmt, err := r.db.Prepare(`
+func (s *AccountStorage) Insert(account Account) (Account, error) {
+	stmt, err := s.db.Prepare(`
 		INSERT INTO "account" (
 			user_id, name, description, 
 			url, username, password
@@ -44,8 +44,8 @@ func (r *AccountRepository) Insert(account Account) (Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) Find(id string) (Account, error) {
-	stmt, err := r.db.Prepare(`
+func (s *AccountStorage) Find(id string) (Account, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
@@ -66,8 +66,8 @@ func (r *AccountRepository) Find(id string) (Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) FindByUser(user User) (Account, error) {
-	stmt, err := r.db.Prepare(`
+func (s *AccountStorage) FindByUser(user User) (Account, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
@@ -88,8 +88,8 @@ func (r *AccountRepository) FindByUser(user User) (Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) FindByName(name string) (Account, error) {
-	stmt, err := r.db.Prepare(`
+func (s *AccountStorage) FindByName(name string) (Account, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
@@ -110,8 +110,8 @@ func (r *AccountRepository) FindByName(name string) (Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) FindAll(limit, offset int) ([]Account, error) {
-	stmt, err := r.db.Prepare(`
+func (s *AccountStorage) FindAll(limit, offset int) ([]Account, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
@@ -143,8 +143,8 @@ func (r *AccountRepository) FindAll(limit, offset int) ([]Account, error) {
 	return accounts, nil
 }
 
-func (r *AccountRepository) Update(account Account) (Account, error) {
-	tx, err := r.db.Begin()
+func (s *AccountStorage) Update(account Account) (Account, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
 		return account, err
 	}
@@ -189,8 +189,8 @@ func (r *AccountRepository) Update(account Account) (Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) Delete(id string) error {
-	stmt, err := r.db.Prepare(`DELETE FROM "account" WHERE id = $1;`)
+func (s *AccountStorage) Delete(id string) error {
+	stmt, err := s.db.Prepare(`DELETE FROM "account" WHERE id = $1;`)
 	if err != nil {
 		return err
 	}

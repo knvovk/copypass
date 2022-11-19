@@ -1,4 +1,4 @@
-package domain
+package storage
 
 import (
 	"database/sql"
@@ -11,16 +11,16 @@ type User struct {
 	PasswordHash string
 }
 
-type UserRepository struct {
+type UserStorage struct {
 	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserStorage(db *sql.DB) *UserStorage {
+	return &UserStorage{db: db}
 }
 
-func (r *UserRepository) Insert(user User) (User, error) {
-	stmt, err := r.db.Prepare(`
+func (s *UserStorage) Insert(user User) (User, error) {
+	stmt, err := s.db.Prepare(`
 		INSERT INTO "user" (username, email, password_hash)
 		VALUES ($1, $2, $3)
 		RETURNING id;
@@ -35,8 +35,8 @@ func (r *UserRepository) Insert(user User) (User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) Find(id string) (User, error) {
-	stmt, err := r.db.Prepare(`
+func (s *UserStorage) Find(id string) (User, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, username, email, password_hash
 		FROM "user"
 		WHERE id = $1;
@@ -54,8 +54,8 @@ func (r *UserRepository) Find(id string) (User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) FindByUsername(username string) (User, error) {
-	stmt, err := r.db.Prepare(`
+func (s *UserStorage) FindByUsername(username string) (User, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
 		WHERE username = $1;
@@ -71,8 +71,8 @@ func (r *UserRepository) FindByUsername(username string) (User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) FindByEmail(email string) (User, error) {
-	stmt, err := r.db.Prepare(`
+func (s *UserStorage) FindByEmail(email string) (User, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
 		WHERE email = $1;
@@ -88,8 +88,8 @@ func (r *UserRepository) FindByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) FindAll(limit, offset int) ([]User, error) {
-	stmt, err := r.db.Prepare(`
+func (s *UserStorage) FindAll(limit, offset int) ([]User, error) {
+	stmt, err := s.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
 		LIMIT $1
@@ -116,8 +116,8 @@ func (r *UserRepository) FindAll(limit, offset int) ([]User, error) {
 	return users, nil
 }
 
-func (r *UserRepository) Update(user User) (User, error) {
-	tx, err := r.db.Begin()
+func (s *UserStorage) Update(user User) (User, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
 		return user, err
 	}
@@ -158,8 +158,8 @@ func (r *UserRepository) Update(user User) (User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) Delete(id string) error {
-	stmt, err := r.db.Prepare(`DELETE FROM "user" WHERE id = $1`)
+func (s *UserStorage) Delete(id string) error {
+	stmt, err := s.db.Prepare(`DELETE FROM "user" WHERE id = $1`)
 	if err != nil {
 		return err
 	}

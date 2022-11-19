@@ -2,16 +2,16 @@ package service
 
 import (
 	"github.com/knvovk/copypass/internal/data"
-	"github.com/knvovk/copypass/internal/domain"
+	"github.com/knvovk/copypass/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
 type UserService struct {
-	repo *domain.UserRepository
+	repo *storage.UserStorage
 	log  *logrus.Logger
 }
 
-func NewUserService(repo *domain.UserRepository, log *logrus.Logger) *UserService {
+func NewUserService(repo *storage.UserStorage, log *logrus.Logger) *UserService {
 	return &UserService{repo: repo, log: log}
 }
 
@@ -77,7 +77,7 @@ func (s *UserService) Delete(user data.User) error {
 	return nil
 }
 
-func mapUserData(user domain.User, unsafe bool) data.User {
+func mapUserData(user storage.User, unsafe bool) data.User {
 	_user := data.User{
 		Id:       user.Id,
 		Username: user.Username,
@@ -89,8 +89,8 @@ func mapUserData(user domain.User, unsafe bool) data.User {
 	return _user
 }
 
-func mapUserDomain(user data.User) domain.User {
-	return domain.User{
+func mapUserDomain(user data.User) storage.User {
+	return storage.User{
 		Id:           user.Id,
 		Username:     user.Username,
 		Email:        user.Email,

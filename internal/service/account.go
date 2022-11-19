@@ -2,16 +2,16 @@ package service
 
 import (
 	"github.com/knvovk/copypass/internal/data"
-	"github.com/knvovk/copypass/internal/domain"
+	"github.com/knvovk/copypass/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
 type AccountService struct {
-	repo *domain.AccountRepository
+	repo *storage.AccountStorage
 	log  *logrus.Logger
 }
 
-func NewAccountService(repo *domain.AccountRepository, log *logrus.Logger) *AccountService {
+func NewAccountService(repo *storage.AccountStorage, log *logrus.Logger) *AccountService {
 	return &AccountService{repo: repo, log: log}
 }
 
@@ -75,7 +75,7 @@ func (s *AccountService) Delete(account data.Account) error {
 	return nil
 }
 
-func mapAccountData(account domain.Account) data.Account {
+func mapAccountData(account storage.Account) data.Account {
 	return data.Account{
 		Id:          account.Id,
 		UserId:      account.User.Id,
@@ -87,10 +87,10 @@ func mapAccountData(account domain.Account) data.Account {
 	}
 }
 
-func mapAccountDomain(account data.Account) domain.Account {
-	return domain.Account{
+func mapAccountDomain(account data.Account) storage.Account {
+	return storage.Account{
 		Id:          account.Id,
-		User:        domain.User{Id: account.UserId},
+		User:        storage.User{Id: account.UserId},
 		Name:        account.Name,
 		Description: account.Description,
 		Url:         account.Url,

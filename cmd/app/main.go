@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var configPath = flag.String("config", "config/config.toml", "Path to config.toml")
+var configPath = flag.String("config", "configs/config.toml", "Path to config.toml")
 
 func main() {
 	flag.Parse()
