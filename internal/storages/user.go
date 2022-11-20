@@ -1,15 +1,9 @@
-package storage
+package storages
 
 import (
 	"database/sql"
+	"github.com/knvovk/copypass/internal/models"
 )
-
-type User struct {
-	Id           string
-	Username     string
-	Email        string
-	PasswordHash string
-}
 
 type UserStorage struct {
 	db *sql.DB
@@ -19,7 +13,7 @@ func NewUserStorage(db *sql.DB) *UserStorage {
 	return &UserStorage{db: db}
 }
 
-func (s *UserStorage) Insert(user User) (User, error) {
+func (s *UserStorage) Insert(user models.User) (models.User, error) {
 	stmt, err := s.db.Prepare(`
 		INSERT INTO "user" (username, email, password_hash)
 		VALUES ($1, $2, $3)
@@ -35,13 +29,13 @@ func (s *UserStorage) Insert(user User) (User, error) {
 	return user, nil
 }
 
-func (s *UserStorage) Find(id string) (User, error) {
+func (s *UserStorage) Find(id string) (models.User, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, username, email, password_hash
 		FROM "user"
 		WHERE id = $1;
 	`)
-	var user = User{}
+	var user = models.User{}
 	if err != nil {
 		return user, err
 	}
@@ -54,13 +48,13 @@ func (s *UserStorage) Find(id string) (User, error) {
 	return user, nil
 }
 
-func (s *UserStorage) FindByUsername(username string) (User, error) {
+func (s *UserStorage) FindByUsername(username string) (models.User, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
 		WHERE username = $1;
 	`)
-	var user = User{}
+	var user = models.User{}
 	if err != nil {
 		return user, err
 	}
@@ -71,13 +65,13 @@ func (s *UserStorage) FindByUsername(username string) (User, error) {
 	return user, nil
 }
 
-func (s *UserStorage) FindByEmail(email string) (User, error) {
+func (s *UserStorage) FindByEmail(email string) (models.User, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
 		WHERE email = $1;
 	`)
-	var user = User{}
+	var user = models.User{}
 	if err != nil {
 		return user, err
 	}
@@ -88,14 +82,14 @@ func (s *UserStorage) FindByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func (s *UserStorage) FindAll(limit, offset int) ([]User, error) {
+func (s *UserStorage) FindAll(limit, offset int) ([]models.User, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, username, email
 		FROM "user"
 		LIMIT $1
 		OFFSET $2;
 	`)
-	users := make([]User, 0)
+	users := make([]models.User, 0)
 	if err != nil {
 		return users, err
 	}
@@ -106,7 +100,7 @@ func (s *UserStorage) FindAll(limit, offset int) ([]User, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var user = User{}
+		var user = models.User{}
 		args := []any{&user.Id, &user.Username, &user.Email}
 		if err := rows.Scan(args...); err != nil {
 			return users, err
@@ -116,7 +110,7 @@ func (s *UserStorage) FindAll(limit, offset int) ([]User, error) {
 	return users, nil
 }
 
-func (s *UserStorage) Update(user User) (User, error) {
+func (s *UserStorage) Update(user models.User) (models.User, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return user, err

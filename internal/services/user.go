@@ -1,79 +1,80 @@
-package service
+package services
 
 import (
-	"github.com/knvovk/copypass/internal/data"
-	"github.com/knvovk/copypass/internal/storage"
+	"github.com/knvovk/copypass/internal/dto"
+	"github.com/knvovk/copypass/internal/models"
+	"github.com/knvovk/copypass/internal/storages"
 	"github.com/knvovk/copypass/pkg/passwd"
 	"log"
 )
 
 type UserService struct {
-	repo *storage.UserStorage
+	userStorage *storages.UserStorage
 }
 
-func NewUserService(repo *storage.UserStorage) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(storage *storages.UserStorage) *UserService {
+	return &UserService{userStorage: storage}
 }
 
-func (s *UserService) Create(user data.User) (data.User, error) {
+func (s *UserService) Create(user dto.User) (dto.User, error) {
 	passwordHash, err := passwd.HashPassword(user.Password)
 	if err != nil {
 		log.Printf("Operation CREATE USER failed: %v\n", err)
-		return data.User{}, err
+		return dto.User{}, err
 	}
-	_user := mapUserDomain(user)
+	_user := userModel(user)
 	_user.PasswordHash = passwordHash
-	inserted, err := s.repo.Insert(_user)
+	inserted, err := s.userStorage.Insert(_user)
 	if err != nil {
 		log.Printf("Operation CREATE USER failed: %v\n", err)
-		return data.User{}, err
+		return dto.User{}, err
 	}
-	user = mapUserData(inserted, false)
+	user = userDto(inserted, false)
 	log.Printf("Operation CREATE USER done: %s\n", user.Id)
 	return user, nil
 }
 
-func (s *UserService) GetOne(id string, unsafe bool) (data.User, error) {
-	_user, err := s.repo.Find(id)
+func (s *UserService) GetOne(id string, unsafe bool) (dto.User, error) {
+	_user, err := s.userStorage.Find(id)
 	if err != nil {
 		log.Printf("Operation GET USER failed: %v\n", err)
 		log.Printf("Requested id: %s\n", id)
-		return data.User{}, err
+		return dto.User{}, err
 	}
-	user := mapUserData(_user, unsafe)
+	user := userDto(_user, unsafe)
 	log.Printf("Operation GET USER done: %v\n", user)
 	return user, nil
 }
 
-func (s *UserService) GetMany(limit, offset int) ([]data.User, error) {
-	_users, err := s.repo.FindAll(limit, offset)
+func (s *UserService) GetMany(limit, offset int) ([]dto.User, error) {
+	_users, err := s.userStorage.FindAll(limit, offset)
 	if err != nil {
 		log.Printf("Operation GET USERS failed: %v\n", err)
 		return nil, err
 	}
-	users := make([]data.User, 0)
+	users := make([]dto.User, 0)
 	for _, _user := range _users {
-		user := mapUserData(_user, false)
+		user := userDto(_user, false)
 		users = append(users, user)
 	}
 	log.Printf("Operation GET USERS done. Total: %d\n", len(users))
 	return users, nil
 }
 
-func (s *UserService) Update(user data.User) (data.User, error) {
-	_user := mapUserDomain(user)
-	updated, err := s.repo.Update(_user)
+func (s *UserService) Update(user dto.User) (dto.User, error) {
+	_user := userModel(user)
+	updated, err := s.userStorage.Update(_user)
 	if err != nil {
 		log.Printf("Operation UPDATE USER failed: %v\n", err)
-		return data.User{}, err
+		return dto.User{}, err
 	}
-	user = mapUserData(updated, false)
+	user = userDto(updated, false)
 	log.Printf("Operation UPDATE USER done: %v\n", user)
 	return user, nil
 }
 
-func (s *UserService) Delete(user data.User) error {
-	if err := s.repo.Delete(user.Id); err != nil {
+func (s *UserService) Delete(user dto.User) error {
+	if err := s.userStorage.Delete(user.Id); err != nil {
 		log.Printf("Operation DELETE USER failed: %v\n", err)
 		return err
 	}
@@ -81,8 +82,8 @@ func (s *UserService) Delete(user data.User) error {
 	return nil
 }
 
-func mapUserData(user storage.User, unsafe bool) data.User {
-	_user := data.User{
+func userDto(user models.User, unsafe bool) dto.User {
+	_user := dto.User{
 		Id:       user.Id,
 		Username: user.Username,
 		Email:    user.Email,
@@ -93,8 +94,8 @@ func mapUserData(user storage.User, unsafe bool) data.User {
 	return _user
 }
 
-func mapUserDomain(user data.User) storage.User {
-	return storage.User{
+func userModel(user dto.User) models.User {
+	return models.User{
 		Id:           user.Id,
 		Username:     user.Username,
 		Email:        user.Email,

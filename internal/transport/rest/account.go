@@ -6,15 +6,15 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/knvovk/copypass/internal/data"
-	"github.com/knvovk/copypass/internal/service"
+	"github.com/knvovk/copypass/internal/dto"
+	"github.com/knvovk/copypass/internal/services"
 )
 
 type AccountHandler struct {
-	accountService *service.AccountService
+	accountService *services.AccountService
 }
 
-func NewAccountHandler(accountService *service.AccountService) *AccountHandler {
+func NewAccountHandler(accountService *services.AccountService) *AccountHandler {
 	return &AccountHandler{accountService: accountService}
 }
 
@@ -27,12 +27,12 @@ func (h *AccountHandler) Register(router *mux.Router) {
 }
 
 func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var account data.Account
+	var account dto.Account
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
@@ -41,13 +41,13 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_account, err := h.accountService.Create(account)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(data.BuildSuccessResponse(_account))
+	response, _ := json.Marshal(dto.OkResponse(_account))
 	w.Write(response)
 }
 
@@ -58,13 +58,13 @@ func (h *AccountHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 	account, err := h.accountService.GetOne(params["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(data.BuildSuccessResponse(account))
+	response, _ := json.Marshal(dto.OkResponse(account))
 	w.Write(response)
 }
 
@@ -81,25 +81,25 @@ func (h *AccountHandler) GetMany(w http.ResponseWriter, r *http.Request) {
 	accounts, err := h.accountService.GetMany(limit, offset)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	m := map[string]any{"count": len(accounts), "accounts": accounts}
-	response, _ := json.Marshal(data.BuildSuccessResponse(m))
+	response, _ := json.Marshal(dto.OkResponse(m))
 	w.Write(response)
 }
 
 func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	account := data.Account{Id: params["id"]}
+	account := dto.Account{Id: params["id"]}
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
@@ -108,24 +108,24 @@ func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
 	_account, err := h.accountService.Update(account)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(data.BuildSuccessResponse(_account))
+	response, _ := json.Marshal(dto.OkResponse(_account))
 	w.Write(response)
 }
 
 func (h *AccountHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	account := data.Account{Id: params["id"]}
+	account := dto.Account{Id: params["id"]}
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := h.accountService.Delete(account); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}

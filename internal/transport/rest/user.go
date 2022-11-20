@@ -6,15 +6,15 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/knvovk/copypass/internal/data"
-	"github.com/knvovk/copypass/internal/service"
+	"github.com/knvovk/copypass/internal/dto"
+	"github.com/knvovk/copypass/internal/services"
 )
 
 type UserHandler struct {
-	userService *service.UserService
+	userService *services.UserService
 }
 
-func NewUserHandler(userService *service.UserService) *UserHandler {
+func NewUserHandler(userService *services.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
@@ -27,12 +27,12 @@ func (h *UserHandler) Register(router *mux.Router) {
 }
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var user data.User
+	var user dto.User
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
@@ -41,13 +41,13 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_user, err := h.userService.Create(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(data.BuildSuccessResponse(_user))
+	response, _ := json.Marshal(dto.OkResponse(_user))
 	w.Write(response)
 }
 
@@ -58,13 +58,13 @@ func (h *UserHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 	user, err := h.userService.GetOne(params["id"], true)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(data.BuildSuccessResponse(user))
+	response, _ := json.Marshal(dto.OkResponse(user))
 	w.Write(response)
 }
 
@@ -81,25 +81,25 @@ func (h *UserHandler) GetMany(w http.ResponseWriter, r *http.Request) {
 	users, err := h.userService.GetMany(limit, offset)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	m := map[string]any{"count": len(users), "users": users}
-	response, _ := json.Marshal(data.BuildSuccessResponse(m))
+	response, _ := json.Marshal(dto.OkResponse(m))
 	w.Write(response)
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	user := data.User{Id: params["id"]}
+	user := dto.User{Id: params["id"]}
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
@@ -108,24 +108,24 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	_user, err := h.userService.Update(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(data.BuildSuccessResponse(_user))
+	response, _ := json.Marshal(dto.OkResponse(_user))
 	w.Write(response)
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	user := data.User{Id: params["id"]}
+	user := dto.User{Id: params["id"]}
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := h.userService.Delete(user); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(data.BuildFailureResponse(err))
+		response, _ := json.Marshal(dto.ErrorResponse(err))
 		w.Write(response)
 		return
 	}

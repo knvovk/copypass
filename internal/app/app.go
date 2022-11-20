@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/knvovk/copypass/internal/service"
-	"github.com/knvovk/copypass/internal/storage"
+	"github.com/knvovk/copypass/internal/services"
+	"github.com/knvovk/copypass/internal/storages"
 )
 
 func Run(db *sql.DB) {
@@ -27,17 +27,17 @@ func Run(db *sql.DB) {
 	}
 
 	{
-		_storage := storage.NewUserStorage(db)
-		_service := service.NewUserService(_storage)
-		_handler := rest.NewUserHandler(_service)
-		_handler.Register(router)
+		storage := storages.NewUserStorage(db)
+		service := services.NewUserService(storage)
+		handler := rest.NewUserHandler(service)
+		handler.Register(router)
 	}
 
 	{
-		_storage := storage.NewAccountStorage(db)
-		_service := service.NewAccountService(_storage)
-		_handler := rest.NewAccountHandler(_service)
-		_handler.Register(router)
+		storage := storages.NewAccountStorage(db)
+		service := services.NewAccountService(storage)
+		handler := rest.NewAccountHandler(service)
+		handler.Register(router)
 	}
 
 	log.Printf("Listen on %s...\n", address)

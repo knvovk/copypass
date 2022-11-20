@@ -1,18 +1,9 @@
-package storage
+package storages
 
 import (
 	"database/sql"
+	"github.com/knvovk/copypass/internal/models"
 )
-
-type Account struct {
-	Id          string
-	User        User
-	Name        string
-	Description string
-	Url         string
-	Username    string
-	Password    string
-}
 
 func NewAccountStorage(db *sql.DB) *AccountStorage {
 	return &AccountStorage{db: db}
@@ -22,7 +13,7 @@ type AccountStorage struct {
 	db *sql.DB
 }
 
-func (s *AccountStorage) Insert(account Account) (Account, error) {
+func (s *AccountStorage) Insert(account models.Account) (models.Account, error) {
 	stmt, err := s.db.Prepare(`
 		INSERT INTO "account" (
 			user_id, name, description, 
@@ -44,14 +35,14 @@ func (s *AccountStorage) Insert(account Account) (Account, error) {
 	return account, nil
 }
 
-func (s *AccountStorage) Find(id string) (Account, error) {
+func (s *AccountStorage) Find(id string) (models.Account, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
 		WHERE id = $1;
 	`)
-	var account = Account{}
+	var account = models.Account{}
 	if err != nil {
 		return account, nil
 	}
@@ -66,14 +57,14 @@ func (s *AccountStorage) Find(id string) (Account, error) {
 	return account, nil
 }
 
-func (s *AccountStorage) FindByUser(user User) (Account, error) {
+func (s *AccountStorage) FindByUser(user models.User) (models.Account, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
 		WHERE user_id = $1;
 	`)
-	var account = Account{}
+	var account = models.Account{}
 	if err != nil {
 		return account, nil
 	}
@@ -88,14 +79,14 @@ func (s *AccountStorage) FindByUser(user User) (Account, error) {
 	return account, nil
 }
 
-func (s *AccountStorage) FindByName(name string) (Account, error) {
+func (s *AccountStorage) FindByName(name string) (models.Account, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
 		FROM "account"
 		WHERE name = $1;
 	`)
-	var account = Account{}
+	var account = models.Account{}
 	if err != nil {
 		return account, nil
 	}
@@ -110,7 +101,7 @@ func (s *AccountStorage) FindByName(name string) (Account, error) {
 	return account, nil
 }
 
-func (s *AccountStorage) FindAll(limit, offset int) ([]Account, error) {
+func (s *AccountStorage) FindAll(limit, offset int) ([]models.Account, error) {
 	stmt, err := s.db.Prepare(`
 		SELECT id, user_id, name, description, url, 
 			username, password
@@ -118,7 +109,7 @@ func (s *AccountStorage) FindAll(limit, offset int) ([]Account, error) {
 		LIMIT $1
 		OFFSET $2;
 	`)
-	accounts := make([]Account, 0)
+	accounts := make([]models.Account, 0)
 	if err != nil {
 		return accounts, nil
 	}
@@ -129,7 +120,7 @@ func (s *AccountStorage) FindAll(limit, offset int) ([]Account, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var account = Account{}
+		var account = models.Account{}
 		args := []any{
 			&account.Id, &account.User.Id, &account.Name,
 			&account.Description, &account.Url,
@@ -143,7 +134,7 @@ func (s *AccountStorage) FindAll(limit, offset int) ([]Account, error) {
 	return accounts, nil
 }
 
-func (s *AccountStorage) Update(account Account) (Account, error) {
+func (s *AccountStorage) Update(account models.Account) (models.Account, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return account, err
