@@ -3,46 +3,45 @@ package service
 import (
 	"github.com/knvovk/copypass/internal/data"
 	"github.com/knvovk/copypass/internal/storage"
-	"github.com/sirupsen/logrus"
+	"log"
 )
 
 type AccountService struct {
 	repo *storage.AccountStorage
-	log  *logrus.Logger
 }
 
-func NewAccountService(repo *storage.AccountStorage, log *logrus.Logger) *AccountService {
-	return &AccountService{repo: repo, log: log}
+func NewAccountService(repo *storage.AccountStorage) *AccountService {
+	return &AccountService{repo: repo}
 }
 
 func (s *AccountService) Create(account data.Account) (data.Account, error) {
 	_account := mapAccountDomain(account)
 	inserted, err := s.repo.Insert(_account)
 	if err != nil {
-		s.log.Errorf("Operation CREATE ACCOUNT failed: %v", err)
+		log.Printf("Operation CREATE ACCOUNT failed: %v\n", err)
 		return data.Account{}, nil
 	}
 	account = mapAccountData(inserted)
-	s.log.Infof("Operation CREATE ACCOUNT done: %s", account.Id)
+	log.Printf("Operation CREATE ACCOUNT done: %s\n", account.Id)
 	return account, nil
 }
 
 func (s *AccountService) GetOne(id string) (data.Account, error) {
 	_account, err := s.repo.Find(id)
 	if err != nil {
-		s.log.Errorf("Operation GET ACCOUNT failed: %v", err)
-		s.log.Errorf("Requested id: %s", id)
+		log.Printf("Operation GET ACCOUNT failed: %v\n", err)
+		log.Printf("Requested id: %s\n", id)
 		return data.Account{}, nil
 	}
 	account := mapAccountData(_account)
-	s.log.Debugf("Operation GET ACCOUNT done: %v", account)
+	log.Printf("Operation GET ACCOUNT done: %v\n", account)
 	return account, nil
 }
 
 func (s *AccountService) GetMany(limit, offset int) ([]data.Account, error) {
 	_accounts, err := s.repo.FindAll(limit, offset)
 	if err != nil {
-		s.log.Errorf("Operation GET ACCOUNTS failed: %v", err)
+		log.Printf("Operation GET ACCOUNTS failed: %v\n", err)
 		return nil, err
 	}
 	accounts := make([]data.Account, 0)
@@ -50,7 +49,7 @@ func (s *AccountService) GetMany(limit, offset int) ([]data.Account, error) {
 		account := mapAccountData(_account)
 		accounts = append(accounts, account)
 	}
-	s.log.Debugf("Operation GET ACCOUNTS done. Total: %d", len(accounts))
+	log.Printf("Operation GET ACCOUNTS done. Total: %d\n", len(accounts))
 	return accounts, nil
 }
 
@@ -58,20 +57,20 @@ func (s *AccountService) Update(account data.Account) (data.Account, error) {
 	_account := mapAccountDomain(account)
 	updated, err := s.repo.Update(_account)
 	if err != nil {
-		s.log.Errorf("Operation UPDATE ACCOUNT failed: %v", err)
+		log.Printf("Operation UPDATE ACCOUNT failed: %v\n", err)
 		return data.Account{}, nil
 	}
 	account = mapAccountData(updated)
-	s.log.Infof("Operation UPDATE ACCOUNT done: %v", account)
+	log.Printf("Operation UPDATE ACCOUNT done: %v\n", account)
 	return account, nil
 }
 
 func (s *AccountService) Delete(account data.Account) error {
 	if err := s.repo.Delete(account.Id); err != nil {
-		s.log.Errorf("Operation DELETE ACCOUNT failed: %v", err)
+		log.Printf("Operation DELETE ACCOUNT failed: %v\n", err)
 		return err
 	}
-	s.log.Infof("Operation DELETE ACCOUNT done: %v", account)
+	log.Printf("Operation DELETE ACCOUNT done: %v\n", account)
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -23,22 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger := logrus.New()
-	logger.Formatter = buildLogFormatter(cfg)
-	// logger.SetReportCaller(true)
-	if cfg.App.IsDebug {
-		logger.Level = logrus.DebugLevel
-	} else {
-		logger.Level = logrus.InfoLevel
-	}
 	flags := os.O_CREATE | os.O_APPEND | os.O_WRONLY
 	file, err := os.OpenFile(cfg.Log.Path, flags, 0666)
 	if err != nil {
-		logger.Out = os.Stdout
-		logger.Errorf("Unable to load log file, using STDOUT: %v", err)
-	} else {
-		logger.Out = file
+		log.Fatalf("Couldn't open the logs file: %v\n", err)
 	}
+	log.SetOutput(file)
 
 	db, err := sql.Open("pgx", cfg.DB.URL)
 	if err != nil {
@@ -47,9 +38,8 @@ func main() {
 	}
 	defer db.Close()
 
-	if err = app.Run(cfg, db, logger); err != nil {
-		fmt.Printf("Unable to run application: %v\n", err)
-		os.Exit(1)
+	if err = app.Run(cfg, db); err != nil {
+		log.Fatalf("Couldn't run application: %v\n", err)
 	}
 }
 
