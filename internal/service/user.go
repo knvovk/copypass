@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/knvovk/copypass/internal/data"
 	"github.com/knvovk/copypass/internal/storage"
+	"github.com/knvovk/copypass/pkg/passwd"
 	"log"
 )
 
@@ -15,7 +16,11 @@ func NewUserService(repo *storage.UserStorage) *UserService {
 }
 
 func (s *UserService) Create(user data.User) (data.User, error) {
-	passwordHash := user.Password
+	passwordHash, err := passwd.HashPassword(user.Password)
+	if err != nil {
+		log.Printf("Operation CREATE USER failed: %v\n", err)
+		return data.User{}, err
+	}
 	_user := mapUserDomain(user)
 	_user.PasswordHash = passwordHash
 	inserted, err := s.repo.Insert(_user)
@@ -35,7 +40,7 @@ func (s *UserService) GetOne(id string, unsafe bool) (data.User, error) {
 		log.Printf("Requested id: %s\n", id)
 		return data.User{}, err
 	}
-	user := mapUserData(_user, true)
+	user := mapUserData(_user, unsafe)
 	log.Printf("Operation GET USER done: %v\n", user)
 	return user, nil
 }
