@@ -1,0 +1,42 @@
+### CREATE user
+POST http://{{host}}:{{port}}/users
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "test_user",
+  "email": "test_user@email.com",
+  "password": "test_password"
+}
+
+
+### GET users
+GET http://{{host}}:{{port}}/users
+Accept: application/json
+
+
+### GET users with pagination
+GET http://{{host}}:{{port}}/users?limit=2&offset=2
+Accept: application/json
+
+
+### GET user
+GET http://{{host}}:{{port}}/users/15dcba30-0211-4311-854b-659331d9c0cb
+Accept: application/json
+
+
+### UPDATE user
+PATCH http://{{host}}:{{port}}/users/15dcba30-0211-4311-854b-659331d9c0cb
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "test_user",
+  "email": "test_user@email.com",
+  "password": "test_password"
+}
+
+
+### DELETE user
+DELETE http://{{host}}:{{port}}/users/15dcba30-0211-4311-854b-659331d9c0cb
+Accept: application/json

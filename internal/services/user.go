@@ -62,6 +62,12 @@ func (s *UserService) GetMany(limit, offset int) ([]dto.User, error) {
 }
 
 func (s *UserService) Update(user dto.User) (dto.User, error) {
+	passwordHash, err := passwd.HashPassword(user.Password)
+	if err != nil {
+		log.Printf("Operation UPDATE USER failed: %v\n", err)
+		return dto.User{}, err
+	}
+	user.Password = passwordHash
 	_user := userModel(user)
 	updated, err := s.userStorage.Update(_user)
 	if err != nil {
