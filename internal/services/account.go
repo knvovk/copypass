@@ -8,16 +8,16 @@ import (
 )
 
 type AccountService struct {
-	repo *storages.AccountStorage
+	accountStorage *storages.AccountStorage
 }
 
-func NewAccountService(repo *storages.AccountStorage) *AccountService {
-	return &AccountService{repo: repo}
+func NewAccountService(accountStorage *storages.AccountStorage) *AccountService {
+	return &AccountService{accountStorage: accountStorage}
 }
 
 func (s *AccountService) Create(account dto.Account) (dto.Account, error) {
 	_account := accountModel(account)
-	inserted, err := s.repo.Insert(_account)
+	inserted, err := s.accountStorage.Insert(_account)
 	if err != nil {
 		log.Printf("Operation CREATE ACCOUNT failed: %v\n", err)
 		return dto.Account{}, nil
@@ -28,7 +28,7 @@ func (s *AccountService) Create(account dto.Account) (dto.Account, error) {
 }
 
 func (s *AccountService) GetOne(id string) (dto.Account, error) {
-	_account, err := s.repo.Find(id)
+	_account, err := s.accountStorage.Find(id)
 	if err != nil {
 		log.Printf("Operation GET ACCOUNT failed: %v\n", err)
 		log.Printf("Requested id: %s\n", id)
@@ -40,7 +40,7 @@ func (s *AccountService) GetOne(id string) (dto.Account, error) {
 }
 
 func (s *AccountService) GetMany(limit, offset int) ([]dto.Account, error) {
-	_accounts, err := s.repo.FindAll(limit, offset)
+	_accounts, err := s.accountStorage.FindAll(limit, offset)
 	if err != nil {
 		log.Printf("Operation GET ACCOUNTS failed: %v\n", err)
 		return nil, err
@@ -56,7 +56,7 @@ func (s *AccountService) GetMany(limit, offset int) ([]dto.Account, error) {
 
 func (s *AccountService) Update(account dto.Account) (dto.Account, error) {
 	_account := accountModel(account)
-	updated, err := s.repo.Update(_account)
+	updated, err := s.accountStorage.Update(_account)
 	if err != nil {
 		log.Printf("Operation UPDATE ACCOUNT failed: %v\n", err)
 		return dto.Account{}, nil
@@ -67,7 +67,7 @@ func (s *AccountService) Update(account dto.Account) (dto.Account, error) {
 }
 
 func (s *AccountService) Delete(account dto.Account) error {
-	if err := s.repo.Delete(account.Id); err != nil {
+	if err := s.accountStorage.Delete(account.Id); err != nil {
 		log.Printf("Operation DELETE ACCOUNT failed: %v\n", err)
 		return err
 	}

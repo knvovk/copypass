@@ -12,8 +12,8 @@ type UserService struct {
 	userStorage *storages.UserStorage
 }
 
-func NewUserService(storage *storages.UserStorage) *UserService {
-	return &UserService{userStorage: storage}
+func NewUserService(userStorage *storages.UserStorage) *UserService {
+	return &UserService{userStorage: userStorage}
 }
 
 func (s *UserService) Create(user dto.User) (dto.User, error) {
