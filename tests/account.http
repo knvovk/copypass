@@ -1,0 +1,47 @@
+### CREATE account
+POST http://{{host}}:{{port}}/accounts
+Accept: application/json
+Content-Type: application/json
+
+{
+  "user_id": "e570d55f-12e6-45c6-888f-6ea035988c02",
+  "name": "VK",
+  "description": "",
+  "url": "https://vk.com/",
+  "username": "knvovk",
+  "password": "qwerty123456"
+}
+
+
+### GET accounts
+GET http://{{host}}:{{port}}/accounts
+Accept: application/json
+
+
+### GET accounts with pagination
+GET http://{{host}}:{{port}}/accounts?limit=2&offset=2
+Accept: application/json
+
+
+### GET account
+GET http://{{host}}:{{port}}/accounts/4d9f06af-854c-403a-80c2-98436f2efbe5
+Accept: application/json
+
+
+### UPDATE account
+PATCH http://{{host}}:{{port}}/accounts/4d9f06af-854c-403a-80c2-98436f2efbe5
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "VK (changed)",
+  "description": "",
+  "url": "https://vk.com/",
+  "username": "knvovk (changed)",
+  "password": "qwerty123456"
+}
+
+
+### DELETE account
+DELETE http://{{host}}:{{port}}/accounts/4d9f06af-854c-403a-80c2-98436f2efbe5
+Accept: application/json

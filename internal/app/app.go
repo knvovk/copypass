@@ -1,34 +1,45 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
+	"github.com/knvovk/copypass/internal/transport/rest"
+	"log"
+	"net/http"
+	"os"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/knvovk/copypass/internal/config"
-	"github.com/knvovk/copypass/internal/domain"
-	"github.com/knvovk/copypass/internal/handler"
-	"github.com/knvovk/copypass/internal/service"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
+	"github.com/knvovk/copypass/internal/services"
+	"github.com/knvovk/copypass/internal/storages"
 )
 
-func Run(cfg *config.Config, pool *pgxpool.Pool, log *logrus.Logger) error {
-	e := echo.New()
+func Run(db *sql.DB) {
+	host := os.Getenv("APP_HOST")
+	port := os.Getenv("APP_PORT")
+	address := fmt.Sprintf("%s:%s", host, port)
+	router := mux.NewRouter()
+	server := &http.Server{
+		Addr:         address,
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
 	{
-		r := domain.NewUserRepository(pool)
-		s := service.NewUserService(r, log)
-		h := handler.NewUserHandler(s)
-		h.Register(e)
+		storage := storages.NewUserStorage(db)
+		service := services.NewUserService(storage)
+		handler := rest.NewUserHandler(service)
+		handler.Register(router)
 	}
+
 	{
-		r := domain.NewAccountRepository(pool)
-		s := service.NewAccountService(r, log)
-		h := handler.NewAccountHandler(s)
-		h.Register(e)
+		storage := storages.NewAccountStorage(db)
+		service := services.NewAccountService(storage)
+		handler := rest.NewAccountHandler(service)
+		handler.Register(router)
 	}
-	address := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
-	if err := e.Start(address); err != nil {
-		return err
-	}
-	return nil
+
+	log.Printf("Listen on %s...\n", address)
+	log.Fatal(server.ListenAndServe())
 }
